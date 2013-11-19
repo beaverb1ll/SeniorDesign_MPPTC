@@ -15,7 +15,7 @@
 
 #define PANEL_ENABLE__GPIO 60 // digital output -- P9-12
 #define BUCK_PIN__PWM  "P8_13.16" // pwm output -- P8-13
-#define BOOST_PIN__PWM "P9_14.18" // pwm output -- P9-14
+#define BOOST_PIN__PWM "P9_14.17" // pwm output -- P9-14
 #define PANEL_VOLTAGE__ADC 0 // ADC Input       -- P9-39
 #define BATT_VOLTAGE__ADC 1  // ADC Input       -- P9-40
 #define CRNT_SENSE_IN__ADC 2 // ADC Input       -- P9-37
