@@ -68,6 +68,9 @@ int main(void)
     boostDuty = 0;
     period_ns = 0;
 
+    /* Register Signal Handlers*/
+    signal(SIGTERM, sigTERM_handler);
+    signal(SIGINT, sigINT_handler);
     //daemonize();
 
     buckPin = configurePinAsPWM(BUCK_PIN__PWM, PWM_FREQ);
@@ -369,9 +372,7 @@ int daemonize(void)
     
     /* Daemon-specific initialization goes here */
     
-    /* Register Signal Handlers*/
-    signal(SIGTERM, sigTERM_handler);
-    signal(SIGINT, sigINT_handler);
+
     return 0;
  }
  
