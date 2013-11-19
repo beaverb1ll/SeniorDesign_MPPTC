@@ -117,7 +117,7 @@ int main(void)
 
             } else 
             {
-                syslog(LOG_INFO, "ERROR: Something went verrrry wrong. No valid charge case");
+                printf("ERROR: Something went verrrry wrong. No valid charge case");
             }
         }
         // sleep before repeating
@@ -191,7 +191,7 @@ void setDutyCyclePercentForOutput(int percent, int fd)
     int newDuty = 100 - (percent / 100.0) * (1.0e9/PWM_FREQ);
     if (newDuty > 100 || newDuty < 0)
     {
-        syslog(LOG_INFO, "ERROR: Invalid duty cycle: %d", newDuty);
+        printf("ERROR: Invalid duty cycle: %d", newDuty);
         return;
     }
     sprintf(command, "%d", newDuty);
@@ -229,7 +229,7 @@ int configurePinAsInput(int aPin)
     fd = open(buf, O_RDONLY);
     if (fd < 1)
     {
-        syslog(LOG_INFO, "ERROR: Unable to enable ADC pin: %d", aPin);
+        printf("ERROR: Unable to enable ADC pin: %d", aPin);
         closeConnections();
         exit(1);
 
@@ -245,7 +245,7 @@ int configurePinAsPWM(const char *aPin, int aFreq)
     // enable PWM pin
     fd = open("/sys/devices/bone_capemgr.9/slots", O_WRONLY);
     if(fd < 1) {
-        syslog(LOG_INFO, "Unable to enable PWM Pin: %s", aPin);
+        printf("Unable to enable PWM Pin: %s", aPin);
         closeConnections();
         exit(1);
     }
@@ -258,7 +258,7 @@ int configurePinAsPWM(const char *aPin, int aFreq)
     fd = open(buf, O_WRONLY);
     if (fd < 1)
     {
-        syslog(LOG_INFO, "Unable to initialize PWM period: %s", aPin);
+        printf("Unable to initialize PWM period: %s", aPin);
         closeConnections();
         exit(1);
     }
@@ -272,7 +272,7 @@ int configurePinAsPWM(const char *aPin, int aFreq)
     fd = open(buf, O_WRONLY);
     if (fd < 1)
     {
-        syslog(LOG_INFO, "Unable to initialize PWM duty: %s", aPin);
+        printf("Unable to initialize PWM duty: %s", aPin);
         closeConnections();
         exit(1);
     }
@@ -289,7 +289,7 @@ int configurePinAsOutput(int aPin)
     // turn pin into IO
     fd = open("/sys/class/gpio/export", O_WRONLY);
     if(fd < 1) {
-        syslog(LOG_INFO, "Unable to export IO Pin: %d", aPin);
+        printf("Unable to export IO Pin: %d", aPin);
         closeConnections();
         exit(1);
     }
@@ -302,7 +302,7 @@ int configurePinAsOutput(int aPin)
     sprintf(buf, "/sys/class/gpio/gpio%d/direction", aPin);
     fd = open(buf, O_WRONLY);
     if(fd < 1) {
-        syslog(LOG_INFO, "Unable to initialize IO Pin direction: %d", aPin);
+        printf("Unable to initialize IO Pin direction: %d", aPin);
         closeConnections();
         exit(1);
     }
@@ -314,7 +314,7 @@ int configurePinAsOutput(int aPin)
     sprintf(buf, "/sys/class/gpio/gpio%d/value", aPin);
     fd = open(buf, O_WRONLY);
     if(fd < 1) {
-        syslog(LOG_INFO, "Unable to Initialize IO Pin Output to LOW: %d", aPin);
+        printf("Unable to Initialize IO Pin Output to LOW: %d", aPin);
         closeConnections();
         exit(1);
     }
@@ -344,21 +344,21 @@ int daemonize(void)
             
     /* Open any logs here */ 
     openlog("MPPTC", LOG_PID|LOG_CONS, LOG_USER);
-    syslog(LOG_INFO, "Daemon Started.\n");
+    printf("Daemon Started.\n");
             
     /* Create a new SID for the child process */
     sid = setsid();
     if (sid < 0) {
         /* Log the failure */
-        syslog(LOG_INFO, "ERROR :: Unable to create new SID. Exiting.");
+        printf("ERROR :: Unable to create new SID. Exiting.");
         exit(EXIT_FAILURE);
     }
-    syslog(LOG_INFO, "finished forking");
+    printf("finished forking");
     
     /* Change the current working directory */
     if ((chdir("/")) < 0) {
         /* Log the failure */
-        syslog(LOG_INFO, "ERROR :: Unable to change working directory. Exiting");
+        printf("ERROR :: Unable to change working directory. Exiting");
         exit(EXIT_FAILURE);
     }
     
@@ -384,7 +384,7 @@ void sigINT_handler(int signum)
 
 void sigTERM_handler(int signum)
 {
-    syslog(LOG_INFO, "Caught SIGTERM. Exiting...");
+    printf("Caught SIGTERM. Exiting...");
     closeConnections();
     exit(0);
 }
