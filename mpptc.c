@@ -68,7 +68,7 @@ int main(void)
     boostDuty = 0;
     period_ns = 0;
 
-    daemonize();
+    //daemonize();
 
     buckPin = configurePinAsPWM(BUCK_PIN__PWM, PWM_FREQ);
     boostPin = configurePinAsPWM(BOOST_PIN__PWM, PWM_FREQ);
