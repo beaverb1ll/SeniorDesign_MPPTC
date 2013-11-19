@@ -1,4 +1,16 @@
+#include <time.h>
+#include <termios.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
 
 #define PANEL_ENABLE__GPIO 60 // digital output -- P9-12
 #define BUCK_PIN__PWM  "P8_13.16" // pwm output -- P8-13
@@ -26,7 +38,7 @@ void idleMode(void);
 void setDutyCyclePercentForOutput(int percent, int fd);
 void setOutputForDigitalPin(int aState, int fd);
 double getVoltageforInput(int aPin);
-int confiugrePinAsInput(int aPin);
+int configurePinAsInput(int aPin);
 int configurePinAsPWM(const char *aPin, int aFreq);
 int configurePinAsOutput(int aPin);
 
@@ -36,7 +48,8 @@ void sigTERM_handler(int signum);
 void closeConnections(void);
 
 // Global Variables
-int buckDuty, boostDuty, panelModeState, period_ns;
+int buckDuty, boostDuty, panelModeState;
+unsigned long period_ns;
 int buckPin, boostPin, panelEnablePin, panelVoltagePin, battVoltagePin;
 
     /* 
@@ -57,7 +70,7 @@ int main(void)
     daemonize();
 
     buckPin = configurePinAsPWM(BUCK_PIN__PWM, PWM_FREQ);
-    boostPin = configurePinAsPWM(BOOST_PIN__PWM), PWM_FREQ;
+    boostPin = configurePinAsPWM(BOOST_PIN__PWM, PWM_FREQ);
     panelEnablePin = configurePinAsOutput(PANEL_ENABLE__GPIO);
     panelVoltagePin = configurePinAsInput(PANEL_VOLTAGE__ADC);
     battVoltagePin = configurePinAsInput(BATT_VOLTAGE__ADC);
@@ -176,7 +189,7 @@ void setDutyCyclePercentForOutput(int percent, int fd)
 {
    char command[5];
 
-    int newDuty = (percent / 100.0) * PERIOD;
+    int newDuty = (percent / 100.0) * (1.0e9/PWM_FREQ);
     if (newDuty > 100 || newDuty < 0)
     {
         syslog(LOG_INFO, "ERROR: Invalid duty cycle: %d", newDuty);
@@ -184,7 +197,6 @@ void setDutyCyclePercentForOutput(int percent, int fd)
     }
     sprintf(command, "%d", newDuty);
     write(fd, command, strlen(command));
-
 }
 
 void setOutputForDigitalPin(int aState, int fd)
@@ -208,13 +220,14 @@ double getVoltageforInput(int aPin)
     return value*8.7891e-4;
 }
 
-int confiugrePinAsInput(int aPin)
+int configurePinAsInput(int aPin)
 {
+    int fd;
     char buf[50];
 
     sprintf(buf, "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
 
-    fd = open(buf, O_RONLY);
+    fd = open(buf, O_RDONLY);
     if (fd < 1)
     {
         syslog(LOG_INFO, "ERROR: Unable to enable ADC pin: %d", aPin);
@@ -247,7 +260,7 @@ int configurePinAsPWM(const char *aPin, int aFreq)
         syslog(LOG_INFO, "Unable to initialize PWM period: %s", aPin);
         return -1;
     }
-    period_ns = (unsigned long)(1e9 / freq);
+    period_ns = (unsigned long)(1e9 / aFreq);
     sprintf(buf, "%lu", period_ns);
     write(fd, buf, strlen(buf));
     close(fd);
@@ -293,7 +306,7 @@ int configurePinAsOutput(int aPin)
 
 
     // set output low
-    sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
+    sprintf(buf, "/sys/class/gpio/gpio%d/value", aPin);
     fd = open(buf, O_WRONLY);
     if(fd < 1) {
         syslog(LOG_INFO, "Unable to Initialize IO Pin Output to LOW: %d", aPin);
