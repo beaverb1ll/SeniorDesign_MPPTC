@@ -152,8 +152,11 @@ void buckMode(double chargerVoltage)
    //if V_BATT_SENSE greater than Vref
     if (chargerVoltage > VREF)
     {
+    	if (buckDuty < 100)
+    	{
+    		buckDuty++;
+    	}
         // increase buck dutycycle by 1%
-        buckDuty++;
         setDutyCyclePercentForOutput(buckDuty, buckPin);
     }
 }
@@ -171,7 +174,10 @@ void boostMode(double chargerVoltage)
     if (chargerVoltage < VREF)
     {
         // increase buck dutycycle  by 1%
-        boostDuty++;
+        if (boostDuty < 100)
+        {
+        	boostDuty++;
+        }
         setDutyCyclePercentForOutput(boostDuty, boostPin);
     }
 }
@@ -198,6 +204,7 @@ void setDutyCyclePercentForOutput(int percent, int fd)
         return;
     }
     sprintf(command, "%d", newDuty);
+    printf("Set duty: %s", command);
     write(fd, command, strlen(command));
 }
 
