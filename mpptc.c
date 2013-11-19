@@ -1,4 +1,17 @@
+#include <time.h>
+#include <termios.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
 
 #define PM_PIN__DO 60 // digital output
 #define BUCK_PIN__PWM  "P8_13.16"  // pwm
@@ -18,11 +31,15 @@
 #define ON 1
 #define OFF 0
 
-
+void panelMode(void);
+void buckMode(double chargerVoltage);
+void boostMode(double chargerVoltage);
+void idleMode(void);
 void setDutyCyclePercentForOutput(int percent, const char *pin);
 void setOutputForDigitalPin(int aState, int pin);
+double getVoltageforInput(int aPin);
 
-int buckPWM, bootPWM, panelModeState;
+int buckPWM, boostPWM, panelModeState;
 
 int main(void)
 {
@@ -72,7 +89,7 @@ int main(void)
             vBattPanelOn = getVoltageforInput(V_BATT_SENSE__ADC);
 
             //if V_IN_SENSE is equal to Vref, go into panel mode
-            if (panelVoltage == vREF)
+            if (panelVoltage == VREF)
             {
                 panelMode();
 
@@ -94,7 +111,7 @@ int main(void)
     }
 }
    ////panel mode
-void panelMode()
+void panelMode(void)
 {
     buckPWM = 0;
     boostPWM = 0;
@@ -146,7 +163,7 @@ void boostMode(double chargerVoltage)
     }
 }
 
-void idleMode() 
+void idleMode(void)
 {
     buckPWM = 0;
     boostPWM = 0;
@@ -161,7 +178,7 @@ void setDutyCyclePercentForOutput(int percent, const char *pin)
 {    
     char command[200];
 
-    int dutyC = PERIOD - ((percent / 100.0) * PERIOD);
+    int dutyC = PWM_PERIOD - ((percent / 100.0) * PWM_PERIOD);
     sprintf(command, "echo %d >  /sys/devices/ocp.3/pwm_test_%s/duty", dutyC, pin);
     printf("DEBUG :: %s\n", command);
     system(command);
@@ -176,10 +193,11 @@ void setOutputForDigitalPin(int aState, int pin)
     system(command);
 }
 
-double getVoltageforInput(int aPin) 
+double getVoltageforInput(int aPin)
 {
     //cat /sys/bus/iio/devices/iio:device0/in_voltage0_raw
-    char value;
+    char value, buf[15];
+    int fd;
 
     sprintf(buf, "bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
     fd = open(buf, O_RDONLY);
