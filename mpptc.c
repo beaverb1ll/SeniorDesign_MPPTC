@@ -148,7 +148,7 @@ void buckMode(double chargerVoltage)
    //if V_BATT_SENSE greater than Vref
     if (chargerVoltage > VREF)
     {
-        // increase buck dutycycle  by 1%
+        // increase buck dutycycle by 1%
         buckDuty++;
         setDutyCyclePercentForOutput(buckDuty, buckPin);
     }
@@ -396,5 +396,3 @@ void closeConnections(void)
     close(panelVoltagePin);
     close(battVoltagePin);   
 }
-
-
