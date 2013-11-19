@@ -78,7 +78,6 @@ int main(void)
 
     while(TRUE) 
     {
-
         // turn off all charging
         setDutyCyclePercentForOutput(OFF, buckPin);
         setDutyCyclePercentForOutput(OFF, boostPin);
@@ -134,7 +133,6 @@ void panelMode(void)
     setDutyCyclePercentForOutput(buckDuty, buckPin);
     setDutyCyclePercentForOutput(boostDuty, boostPin);
     setOutputForDigitalPin(panelModeState, panelEnablePin);
-
 }
 
 void buckMode(double chargerVoltage)
@@ -231,7 +229,8 @@ int configurePinAsInput(int aPin)
     if (fd < 1)
     {
         syslog(LOG_INFO, "ERROR: Unable to enable ADC pin: %d", aPin);
-        return -1;
+        closeConnections();
+        exit(1);
 
     }
     return fd;
@@ -246,7 +245,8 @@ int configurePinAsPWM(const char *aPin, int aFreq)
     fd = open("/sys/devices/bone_capemgr.9/slots", O_WRONLY);
     if(fd < 1) {
         syslog(LOG_INFO, "Unable to enable PWM Pin: %s", aPin);
-        return -1;
+        closeConnections();
+        exit(1);
     }
     sprintf(buf, "bone_pwm_%s", aPin); 
     write(fd, buf, strlen(buf));
@@ -258,7 +258,8 @@ int configurePinAsPWM(const char *aPin, int aFreq)
     if (fd < 1)
     {
         syslog(LOG_INFO, "Unable to initialize PWM period: %s", aPin);
-        return -1;
+        closeConnections();
+        exit(1);
     }
     period_ns = (unsigned long)(1e9 / aFreq);
     sprintf(buf, "%lu", period_ns);
@@ -271,7 +272,8 @@ int configurePinAsPWM(const char *aPin, int aFreq)
     if (fd < 1)
     {
         syslog(LOG_INFO, "Unable to initialize PWM duty: %s", aPin);
-        return -1;
+        closeConnections();
+        exit(1);
     }
     
     setDutyCyclePercentForOutput(0, fd);
@@ -287,7 +289,8 @@ int configurePinAsOutput(int aPin)
     fd = open("/sys/class/gpio/export", O_WRONLY);
     if(fd < 1) {
         syslog(LOG_INFO, "Unable to export IO Pin: %d", aPin);
-        return -1;
+        closeConnections();
+        exit(1);
     }
     sprintf(buf, "%d", aPin); 
     write(fd, buf, strlen(buf));
@@ -299,7 +302,8 @@ int configurePinAsOutput(int aPin)
     fd = open(buf, O_WRONLY);
     if(fd < 1) {
         syslog(LOG_INFO, "Unable to initialize IO Pin direction: %d", aPin);
-        return -1;
+        closeConnections();
+        exit(1);
     }
     write(fd, "out", 3); 
     close(fd);
@@ -310,7 +314,8 @@ int configurePinAsOutput(int aPin)
     fd = open(buf, O_WRONLY);
     if(fd < 1) {
         syslog(LOG_INFO, "Unable to Initialize IO Pin Output to LOW: %d", aPin);
-        return -1;
+        closeConnections();
+        exit(1);
     }
 
     write(fd, "0", 1); 
@@ -374,7 +379,6 @@ void sigINT_handler(int signum)
     syslog (LOG_INFO, "Caught SIGINT. Exiting...");
     closeConnections();
     exit(0);
-
 }
 
 void sigTERM_handler(int signum)
@@ -386,7 +390,11 @@ void sigTERM_handler(int signum)
 
 void closeConnections(void)
 {
-    
+    close(buckPin);
+    close(boostPin);
+    close(panelEnablePin);
+    close(panelVoltagePin);
+    close(battVoltagePin);   
 }
 
 
