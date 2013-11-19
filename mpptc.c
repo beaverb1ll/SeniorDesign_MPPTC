@@ -1,14 +1,14 @@
 #include <stdio.h>
 
-#define PM_PIN__DO 9 // digital output
+#define PM_PIN__DO 60 // digital output
 #define BUCK_PIN__PWM  "P8_13.16"  // pwm
-#define BOOST_PIN__PWM "P9_14.18" // pwm
-#define V_IN_SENSE__ADC 12 // ADC Input
-#define V_BATT_SENSE__ADC 13  // ADC Input
-#define CRNT_SENSE_IN__ADC 14 // ADC Input
-#define CRNT_SENSE_OUT__ADC 15 // ADC Input
+#define BOOST_PIN__PWM "P9_14.17" // pwm
+#define V_IN_SENSE__ADC 0 // ADC Input
+#define V_BATT_SENSE__ADC 1  // ADC Input
+#define CRNT_SENSE_IN__ADC 2 // ADC Input
+#define CRNT_SENSE_OUT__ADC 3 // ADC Input
 
-#define PWM_PERIOD 9000 // in ??
+#define PWM_PERIOD 10000 // in ??
 #define VB100 12.65     // in volts
 #define VREF 13.5       // in volts
 
@@ -185,7 +185,7 @@ double getVoltageforInput(int aPin)
     fd = open(buf, O_RDONLY);
     read(fd, &value, 1);
     close(fd);
-    
+
     return value*8.7891e-4;
 }
 
