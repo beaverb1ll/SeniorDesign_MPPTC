@@ -161,7 +161,7 @@ void setDutyCyclePercentForOutput(int percent, const char *pin)
 {    
     char command[200];
 
-    int dutyC = (percent / 100.0) * PERIOD;
+    int dutyC = PERIOD - ((percent / 100.0) * PERIOD);
     sprintf(command, "echo %d >  /sys/devices/ocp.3/pwm_test_%s/duty", dutyC, pin);
     printf("DEBUG :: %s\n", command);
     system(command);
@@ -178,7 +178,15 @@ void setOutputForDigitalPin(int aState, int pin)
 
 double getVoltageforInput(int aPin) 
 {
-    cat /sys/bus/iio/devices/iio:device0/in_voltage0_raw
+    //cat /sys/bus/iio/devices/iio:device0/in_voltage0_raw
+    char value;
+
+    sprintf(buf, "bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
+    fd = open(buf, O_RDONLY);
+    read(fd, &value, 1);
+    close(fd);
+    
+    return value*8.7891e-4;
 }
 
 
