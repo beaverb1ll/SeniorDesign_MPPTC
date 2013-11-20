@@ -196,7 +196,7 @@ void setDutyCyclePercentForOutput(int percent, const char *pin)
 
     printf("Entered setDutyCyclePercentForOutput\n");
     int dutyC = PWM_PERIOD - ((percent / 100.0) * PWM_PERIOD);
-    sprintf(command, "echo %d >  /sys/devices/ocp.3/pwm_test_%s/duty", dutyC, pin);
+    sprintf(command, "/bin/bash echo %d >  /sys/devices/ocp.3/pwm_test_%s/duty", dutyC, pin);
     printf("DEBUG :: %s\n", command);
     system(command);
 }
@@ -206,7 +206,7 @@ void setOutputForDigitalPin(int aState, int pin)
     char command[200];
 
     printf("Entered setOutputForDigitalPin\n");
-    sprintf(command, "echo %d > /sys/class/gpio/gpio%d/value", aState, pin);
+    sprintf(command, "/bin/bash echo %d > /sys/class/gpio/gpio%d/value", aState, pin);
     printf("DEBUG :: %s\n", command);
     system(command);
 }
