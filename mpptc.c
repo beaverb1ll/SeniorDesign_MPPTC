@@ -51,6 +51,9 @@ int main(void)
 
     double panelVoltage = -1, vBattPanelOff = -1, vBattPanelOn = -1;
 
+    buckPWM = 0;
+    buckPWM = 0;
+    panelModeState = 0;
     /*start up mode*/
     //set BUCK_PIN and BOOST_PIN to LOW
     //read in V_IN_SENSE
@@ -68,6 +71,7 @@ int main(void)
         //set BUCK_PIN and BOOST_PIN to LOW
         setDutyCyclePercentForOutput(0, BUCK_PIN__PWM);
         setDutyCyclePercentForOutput(0, BOOST_PIN__PWM);
+        setOutputForDigitalPin(OFF, PM_PIN__DO);
 
         //read in V_IN_SENSE
         panelVoltage = getVoltageforInput(V_IN_SENSE__ADC); 
@@ -138,8 +142,12 @@ void buckMode(double chargerVoltage)
    //if V_BATT_SENSE greater than Vref
     if (chargerVoltage > VREF)
     {
-        // increase buck dutycycle  by 1%
-        buckPWM++;
+        if (buckPWM < 100)
+        {
+            // increase buck dutycycle  by 1%
+           buckPWM++;
+        }
+        
         setDutyCyclePercentForOutput(buckPWM, BUCK_PIN__PWM);
     }
 }
@@ -157,8 +165,11 @@ void boostMode(double chargerVoltage)
 
     if (chargerVoltage < VREF)
     {
-        // increase buck dutycycle  by 1%
-        boostPWM++;
+        if (boostPWM < 100)
+        {
+            // increase buck dutycycle  by 1%
+            boostPWM++;
+        }
         setDutyCyclePercentForOutput(boostPWM, BOOST_PIN__PWM);
     }
 }
@@ -196,10 +207,10 @@ void setOutputForDigitalPin(int aState, int pin)
 double getVoltageforInput(int aPin)
 {
     //cat /sys/bus/iio/devices/iio:device0/in_voltage0_raw
-    char value, buf[15];
-    int fd;
+    char buf[15];
+    int fd, value;
 
-    sprintf(buf, "bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
+    sprintf(buf, "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
     fd = open(buf, O_RDONLY);
     read(fd, &value, 1);
     close(fd);
