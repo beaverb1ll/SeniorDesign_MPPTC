@@ -91,6 +91,8 @@ int main(void)
         panelVoltage = getVoltageforInput(panelVoltagePin); 
         //read in V_BATT_SENSE
         vBattPanelOff = getVoltageforInput(battVoltagePin);
+        printf("Panel Voltage: %lf\n", panelVoltage);
+        printf("vBattPanelOff: %lf\n", vBattPanelOff);
 
         //if V_BATT_SENSE is equal or greater to Vb100 stop charging go into idle mode
         if (vBattPanelOff >= BATT_VOLTAGE_100_PERCENT)
@@ -204,7 +206,7 @@ void setDutyCyclePercentForOutput(int percent, int fd)
         return;
     }
     sprintf(command, "%d", newDuty);
-    printf("Set duty: %s", command);
+    printf("Set duty: %s\n", command);
     write(fd, command, strlen(command));
 }
 
