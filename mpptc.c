@@ -224,11 +224,12 @@ void setOutputForDigitalPin(int aState, int fd)
 double getVoltageforInput(int aPin)
 {
     int value;
+    char test[50];
 
-    read(aPin, &value, 1);
+    read(aPin, test, 5);
     lseek(aPin, 0, SEEK_SET);
-    printf("Raw analogue: %d\n", value);
-    return value*8.7891e-4;
+    printf("Raw analogue: %s\n", value);
+    return atoi(test)*8.7891e-4;
 }
 
 int configurePinAsInput(int aPin)
