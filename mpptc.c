@@ -237,6 +237,7 @@ int configurePinAsInput(int aPin)
     char buf[50];
 
     sprintf(buf, "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
+    printf("pinInput: %s\n", buf);
 
     fd = open(buf, O_RDONLY);
     if (fd < 1)
