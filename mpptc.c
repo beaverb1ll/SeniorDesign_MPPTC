@@ -220,6 +220,11 @@ double getVoltageforInput(int aPin)
     printf("Entered getVoltageforInput\n");
     sprintf(buf, "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
     fd = open(buf, O_RDONLY);
+    if (fd < 1)
+    {
+        printf("ERROR: Unable to open ADC pin %d\n", aPin);
+        return 0.0;
+    }
     read(fd, &value, 1);
     close(fd);
 
