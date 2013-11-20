@@ -227,7 +227,7 @@ double getVoltageforInput(int aPin)
 
     read(aPin, &value, 1);
     lseek(aPin, 0, SEEK_SET);
-
+    printf("Raw analogue: %d\n", value);
     return value*8.7891e-4;
 }
 
