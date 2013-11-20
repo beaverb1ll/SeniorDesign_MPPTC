@@ -67,6 +67,7 @@ int main(void)
     {
         /*charge mode*/
         ////sense panel voltage
+        printf("Started while loop\n");
 
         //set BUCK_PIN and BOOST_PIN to LOW
         setDutyCyclePercentForOutput(0, BUCK_PIN__PWM);
@@ -117,6 +118,7 @@ int main(void)
    ////panel mode
 void panelMode(void)
 {
+    printf("Entered panelMode\n");
     buckPWM = 0;
     boostPWM = 0;
     panelModeState = ON;
@@ -131,6 +133,7 @@ void panelMode(void)
 void buckMode(double chargerVoltage)
  {
 
+    printf("Entered buckMode\n");
     panelModeState = OFF;
     setOutputForDigitalPin(panelModeState, PM_PIN__DO);
 
@@ -156,6 +159,7 @@ void buckMode(double chargerVoltage)
 void boostMode(double chargerVoltage)
 {
 
+    printf("Entered boostMode\n");
     panelModeState = OFF;
     setOutputForDigitalPin(panelModeState, PM_PIN__DO);
 
@@ -180,6 +184,7 @@ void idleMode(void)
     boostPWM = 0;
     panelModeState = OFF;
 
+    printf("Entered idleMode\n");
     setDutyCyclePercentForOutput(buckPWM, BUCK_PIN__PWM);
     setDutyCyclePercentForOutput(boostPWM, BOOST_PIN__PWM);
     setOutputForDigitalPin(panelModeState, PM_PIN__DO);
@@ -189,6 +194,7 @@ void setDutyCyclePercentForOutput(int percent, const char *pin)
 {    
     char command[200];
 
+    printf("Entered setDutyCyclePercentForOutput\n");
     int dutyC = PWM_PERIOD - ((percent / 100.0) * PWM_PERIOD);
     sprintf(command, "echo %d >  /sys/devices/ocp.3/pwm_test_%s/duty", dutyC, pin);
     printf("DEBUG :: %s\n", command);
@@ -199,6 +205,7 @@ void setOutputForDigitalPin(int aState, int pin)
 {
     char command[200];
 
+    printf("Entered setOutputForDigitalPin\n");
     sprintf(command, "echo %d > /sys/class/gpio/gpio%d/value", aState, pin);
     printf("DEBUG :: %s\n", command);
     system(command);
@@ -210,6 +217,7 @@ double getVoltageforInput(int aPin)
     char buf[15];
     int fd, value;
 
+    printf("Entered getVoltageforInput\n");
     sprintf(buf, "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
     fd = open(buf, O_RDONLY);
     read(fd, &value, 1);
