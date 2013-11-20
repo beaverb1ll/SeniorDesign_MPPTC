@@ -197,7 +197,7 @@ void setDutyCyclePercentForOutput(int percent, int fd)
 {
    char command[5];
 
-    int newDuty = (percent / 100.0) * (1.0e9/PWM_FREQ);
+    int newDuty = (1.0e9/PWM_FREQ)-((percent / 100.0) * (1.0e9/PWM_FREQ));
     if (newDuty > 100 || newDuty < 0)
     {
         printf("ERROR: Invalid duty cycle: %d", newDuty);
