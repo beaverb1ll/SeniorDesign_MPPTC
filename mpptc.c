@@ -54,7 +54,7 @@ void setOutputForDigitalPin(int aState, int fd);
 double getVoltageforInput(int aPin);
 int configurePinAsPWM(const char *aPin, int aFreq);
 int configurePinAsOutput(int aPin);
-void parseArgs(int argc, char const *argv[]);
+void parseArgs(char * const * argv);
 
 int daemonize(void);
 void sigINT_handler(int signum);
@@ -118,7 +118,7 @@ int main(int argc, char const *argv[])
             setDutyCyclePercentForOutput(boostDuty, boostPin);
 
             vBattPanelOn = getVoltageforInput(BATT_VOLTAGE__ADC);
-            printf("vBattPanelOn: %lf\n" vBattPanelOn);
+            printf("vBattPanelOn: %lf\n", vBattPanelOn);
 
             if (panelVoltage == VREF)
             {
@@ -409,10 +409,10 @@ int daemonize(void)
  }
 
 
- void parseArgs(int argc, char const *argv[])
+ void parseArgs(int argc, char * const * argv)
 {
 
-    int temp, opt;
+    int opt;
 
     currentSettings = malloc(sizeof(struct settings));
     if (currentSettings == NULL)
@@ -427,15 +427,14 @@ int daemonize(void)
         switch(opt)
         {
 
-
             case 't': // timeout
                 currentSettings->waitTimeout = atoi(optarg);
                 break;
 
-        case '?':
-            syslog(LOG_INFO, "Invalid startup argument: %c. Exiting...", optopt);
-            exit(1);
-            break;
+            case '?':
+                syslog(LOG_INFO, "Invalid startup argument: %c. Exiting...", optopt);
+                exit(1);
+                break;
         }
     }
 
