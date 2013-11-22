@@ -38,8 +38,7 @@ void boostMode(double chargerVoltage);
 void idleMode(void);
 void setDutyCyclePercentForOutput(int percent, int fd);
 void setOutputForDigitalPin(int aState, int fd);
-float getVoltageforInput(int aPin);
-int configurePinAsInput(int aPin);
+double getVoltageforInput(int aPin);
 int configurePinAsPWM(const char *aPin, int aFreq);
 int configurePinAsOutput(int aPin);
 
@@ -76,8 +75,6 @@ int main(void)
     buckPin = configurePinAsPWM(BUCK_PIN__PWM, PWM_FREQ);
     boostPin = configurePinAsPWM(BOOST_PIN__PWM, PWM_FREQ);
     panelEnablePin = configurePinAsOutput(PANEL_ENABLE__GPIO);
-    panelVoltagePin = configurePinAsInput(PANEL_VOLTAGE__ADC);
-    battVoltagePin = configurePinAsInput(BATT_VOLTAGE__ADC);
 
 
     while(TRUE) 
@@ -88,9 +85,9 @@ int main(void)
         setOutputForDigitalPin(OFF, panelEnablePin);
 
         //read in V_IN_SENSE
-        panelVoltage = getVoltageforInput(panelVoltagePin); 
+        panelVoltage = getVoltageforInput(PANEL_VOLTAGE__ADC); 
         //read in V_BATT_SENSE
-        vBattPanelOff = getVoltageforInput(battVoltagePin);
+        vBattPanelOff = getVoltageforInput(BATT_VOLTAGE__ADC);
         printf("Panel Voltage: %lf\n", panelVoltage);
         printf("vBattPanelOff: %lf\n", vBattPanelOff);
 
@@ -106,7 +103,7 @@ int main(void)
             setDutyCyclePercentForOutput(buckDuty, buckPin);
             setDutyCyclePercentForOutput(boostDuty, boostPin);
 
-            vBattPanelOn = (double)getVoltageforInput(battVoltagePin);
+            vBattPanelOn = getVoltageforInput(BATT_VOLTAGE__ADC);
 
             if (panelVoltage == VREF)
             {
@@ -221,36 +218,36 @@ void setOutputForDigitalPin(int aState, int fd)
     }
 }
 
-float getVoltageforInput(int aPin)
+double getVoltageforInput(int aPin)
 {
-    float value;
-    // char test[50];
+    float rawValue;
+    double voltLevel;
+    char ain_path[200];
+    FILE *fh;
 
-    // read(aPin, test, 5);
-    lseek(aPin, 0, SEEK_SET);
-    read(aPin, &value, sizeof(value));
-    printf("Raw analogue: %f\n", value);
-    return value*8.7891e-4;
-}
+    //printf("Got to read function\n");
 
-int configurePinAsInput(int aPin)
-{
-    int fd;
-    char buf[50];
-
-    sprintf(buf, "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
-    printf("pinInput: %s\n", buf);
-
-    fd = open(buf, O_RDONLY);
-    if (fd < 1)
+    sprintf(ain_path, "/sys/bus/iio/devices/iio:device0/in_voltage%d_raw", aPin);
+    // printf("Device Path: %s\n", ain_path);
+    fh = fopen(ain_path, "r");
+    if (fh == NULL)
     {
-        printf("ERROR: Unable to enable ADC pin: %d", aPin);
-        closeConnections();
+        printf("Unable to open file.\n exiting...\n");
         exit(1);
-
     }
-    return fd;
+
+    fseek(fh, 0, SEEK_SET);
+    fscanf(fh, "%f", &rawValue);
+    fclose(fh);
+
+    // printf("RAW VALUE: %f\n", rawValue);
+
+    voltLevel = ((rawValue * 1.8) + 1.0) / 4096;
+   // printf("Volt Level: %lf\n", voltLevel);
+
+    return voltLevel;
 }
+
 
 int configurePinAsPWM(const char *aPin, int aFreq)
 {
