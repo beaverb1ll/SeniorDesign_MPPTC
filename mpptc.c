@@ -54,7 +54,7 @@ void setOutputForDigitalPin(int aState, int fd);
 double getVoltageforInput(int aPin);
 int configurePinAsPWM(const char *aPin, int aFreq);
 int configurePinAsOutput(int aPin);
-void parseArgs(char * const * argv);
+void parseArgs(int argc, char * const * argv);
 
 int daemonize(void);
 void sigINT_handler(int signum);
