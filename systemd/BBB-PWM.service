@@ -1,0 +1,10 @@
+[Unit]
+Description=BBB PWM Enable
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/bin/enable-BBB-PWM.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

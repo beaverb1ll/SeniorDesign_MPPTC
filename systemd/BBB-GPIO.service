@@ -1,0 +1,10 @@
+[Unit]
+Description=BBB GPIO Enable
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/bin/enable-BBB-GPIO.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=BBB ADC Enable
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/bin/enable-BBB-ADC.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
