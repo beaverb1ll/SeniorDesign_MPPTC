@@ -24,12 +24,25 @@
 #define PWM_FREQ 10000 // in Hz
 #define BATT_VOLTAGE_100_PERCENT 12.65     // in volts
 #define VREF 13.5       // in volts
+#define ADC_VOLTAGE_RATIO 9.611111
 
 // Constants
 #define TRUE 1
 #define FALSE 0
 #define ON 1
 #define OFF 0
+
+struct settings {
+    int waitTimeout;
+};
+
+// Global Variables
+int buckDuty, boostDuty, panelModeState;
+unsigned long period_ns;
+int buckPin, boostPin, panelEnablePin, panelVoltagePin, battVoltagePin;
+
+struct settings *currentSettings;
+
 
 // function prototypes
 void panelMode(void);
@@ -41,16 +54,12 @@ void setOutputForDigitalPin(int aState, int fd);
 double getVoltageforInput(int aPin);
 int configurePinAsPWM(const char *aPin, int aFreq);
 int configurePinAsOutput(int aPin);
+void parseArgs(int argc, char const *argv[]);
 
 int daemonize(void);
 void sigINT_handler(int signum);
 void sigTERM_handler(int signum);
 void closeConnections(void);
-
-// Global Variables
-int buckDuty, boostDuty, panelModeState;
-unsigned long period_ns;
-int buckPin, boostPin, panelEnablePin, panelVoltagePin, battVoltagePin;
 
     /* 
     Notes:
@@ -58,7 +67,7 @@ int buckPin, boostPin, panelEnablePin, panelVoltagePin, battVoltagePin;
       d_buck_start and d_boost_start are duty cycle for starte up
     */
 
-int main(void)
+int main(int argc, char const *argv[])
 {
 
     double panelVoltage = -1, vBattPanelOff = -1, vBattPanelOn = -1;
@@ -67,10 +76,13 @@ int main(void)
     boostDuty = 0;
     period_ns = 0;
 
+
     /* Register Signal Handlers*/
     signal(SIGTERM, sigTERM_handler);
     signal(SIGINT, sigINT_handler);
     //daemonize();
+
+    parseArgs(argc, argv);
 
     buckPin = configurePinAsPWM(BUCK_PIN__PWM, PWM_FREQ);
     boostPin = configurePinAsPWM(BOOST_PIN__PWM, PWM_FREQ);
@@ -89,32 +101,38 @@ int main(void)
         //read in V_BATT_SENSE
         vBattPanelOff = getVoltageforInput(BATT_VOLTAGE__ADC);
         printf("Panel Voltage: %lf\n", panelVoltage);
-        printf("vBattPanelOff: %lf\n", vBattPanelOff);
+        printf("vBatt w/ PanelOff: %lf\n", vBattPanelOff);
 
         //if V_BATT_SENSE is equal or greater to Vb100 stop charging go into idle mode
         if (vBattPanelOff >= BATT_VOLTAGE_100_PERCENT)
         {
             // fully charged, so shutdown all charging
+            printf("Entering Idle Mode\n");
             idleMode();
         }
         else
         {
             // restore previous duty cycle because it was correct
+
             setDutyCyclePercentForOutput(buckDuty, buckPin);
             setDutyCyclePercentForOutput(boostDuty, boostPin);
 
             vBattPanelOn = getVoltageforInput(BATT_VOLTAGE__ADC);
+            printf("vBattPanelOn: %lf\n" vBattPanelOn);
 
             if (panelVoltage == VREF)
             {
+                printf("Entering panelMode\n");
                 panelMode();
 
             } else if(panelVoltage > VREF) 
             {
+                printf("Entering buckMode\n");
                 buckMode(vBattPanelOn);
 
             } else if(panelVoltage < VREF) 
             {
+                printf("Entering boostMode\n");
                 boostMode(vBattPanelOn);
 
             } else 
@@ -122,8 +140,11 @@ int main(void)
                 printf("ERROR: Something went verrrry wrong. No valid charge case");
             }
         }
+
+        printf("buckDuty: %d\nboostDuty: %d\npanelModeState: %d\n", buckDuty, boostDuty, panelModeState);
         // sleep before repeating
-        sleep(1);
+        printf("Sleeping for %d usec\n", currentSettings->waitTimeout);
+        usleep(currentSettings->waitTimeout);
     }
 }
 
@@ -132,6 +153,7 @@ void panelMode(void)
     buckDuty = OFF;
     boostDuty = OFF;
     panelModeState = ON;
+
 
     setDutyCyclePercentForOutput(buckDuty, buckPin);
     setDutyCyclePercentForOutput(boostDuty, boostPin);
@@ -203,7 +225,7 @@ void setDutyCyclePercentForOutput(int percent, int fd)
         return;
     }
     sprintf(command, "%d", newDuty);
-    printf("Set duty: %s\n", command);
+    // printf("Set duty: %s\n", command);
     write(fd, command, strlen(command));
 }
 
@@ -243,6 +265,7 @@ double getVoltageforInput(int aPin)
     // printf("RAW VALUE: %f\n", rawValue);
 
     voltLevel = ((rawValue * 1.8) + 1.0) / 4096;
+    voltLevel *= ADC_VOLTAGE_RATIO;
    // printf("Volt Level: %lf\n", voltLevel);
 
     return voltLevel;
@@ -384,6 +407,40 @@ int daemonize(void)
 
     return 0;
  }
+
+
+ void parseArgs(int argc, char const *argv[])
+{
+
+    int temp, opt;
+
+    currentSettings = malloc(sizeof(struct settings));
+    if (currentSettings == NULL)
+    {
+        syslog(LOG_INFO, "Unable to create settings struct. Exiting...");
+        exit(1);
+    }
+
+    
+    while ((opt = getopt(argc, argv, "t:")) != -1)
+    {
+        switch(opt)
+        {
+
+
+            case 't': // timeout
+                currentSettings->waitTimeout = atoi(optarg);
+                break;
+
+        case '?':
+            syslog(LOG_INFO, "Invalid startup argument: %c. Exiting...", optopt);
+            exit(1);
+            break;
+        }
+    }
+
+    return;
+}
  
 void sigINT_handler(int signum)
 {

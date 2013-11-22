@@ -1,0 +1,14 @@
+[Unit]
+Description=Multi Point Power Tracking Charger Daemon
+#Requires=mysqld.service
+#After=mysqld.service
+#Wants=mysqld.service
+
+[Service]
+
+Type=forking
+EnvironmentFile=/etc/mpptc.conf
+ExecStart=/usr/bin/mpptc $MPPTC_ARGS
+
+[Install]
+WantedBy=multi-user.target
