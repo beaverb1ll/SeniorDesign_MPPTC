@@ -38,7 +38,7 @@ void boostMode(double chargerVoltage);
 void idleMode(void);
 void setDutyCyclePercentForOutput(int percent, int fd);
 void setOutputForDigitalPin(int aState, int fd);
-double getVoltageforInput(int aPin);
+float getVoltageforInput(int aPin);
 int configurePinAsInput(int aPin);
 int configurePinAsPWM(const char *aPin, int aFreq);
 int configurePinAsOutput(int aPin);
@@ -106,7 +106,7 @@ int main(void)
             setDutyCyclePercentForOutput(buckDuty, buckPin);
             setDutyCyclePercentForOutput(boostDuty, boostPin);
 
-            vBattPanelOn = getVoltageforInput(battVoltagePin);
+            vBattPanelOn = (double)getVoltageforInput(battVoltagePin);
 
             if (panelVoltage == VREF)
             {
@@ -221,15 +221,16 @@ void setOutputForDigitalPin(int aState, int fd)
     }
 }
 
-double getVoltageforInput(int aPin)
+float getVoltageforInput(int aPin)
 {
-    int value;
-    char test[50];
+    float value;
+    // char test[50];
 
-    read(aPin, test, 5);
+    // read(aPin, test, 5);
     lseek(aPin, 0, SEEK_SET);
-    printf("Raw analogue: %s\n", value);
-    return atoi(test)*8.7891e-4;
+    read(aPin, &value, sizeof(value));
+    printf("Raw analogue: %f\n", value);
+    return value*8.7891e-4;
 }
 
 int configurePinAsInput(int aPin)
